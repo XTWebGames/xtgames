@@ -3,16 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Shooter Game</title>
+<title>HTML Dash</title>
 <style>
-    body {
+    body, html {
         margin: 0;
+        padding: 0;
         overflow: hidden;
-        background-color: black; /* Set background color to black */
     }
     canvas {
         display: block;
-        margin: 0 auto;
     }
 </style>
 </head>
@@ -21,117 +20,132 @@
     <source src="music/txt4/background_song.mp3" type="audio/mpeg">
     Your browser does not support the audio element.
 </audio>
-<canvas id="gameCanvas" width="800" height="600"></canvas>
-<p style="color:white;">Score: <span id="score">0</span></p> <!-- Score counter -->
+<canvas id="gameCanvas"></canvas>
 <script>
+    // Initialize canvas and context
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
 
-    const playerWidth = 50;
-    const playerHeight = 50;
-    let playerX = canvas.width / 2 - playerWidth / 2;
-    const playerY = canvas.height - playerHeight - 10;
-    const playerSpeed = 5;
-
-    const bulletWidth = 5;
-    const bulletHeight = 10;
-    const bulletSpeed = 8;
-    let bullets = [];
-
-    const enemyWidth = 50;
-    const enemyHeight = 50;
-    let enemyX = Math.random() * (canvas.width - enemyWidth);
-    let enemyY = 0;
-    const enemySpeed = 3;
-
-    let score = 0; // Initialize score
+    // Set canvas dimensions to match window size
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
 
     // Load images
+    const backgroundImage = new Image();
     const playerImage = new Image();
-    playerImage.src = 'images/txt1/txt1-player.png';
+    backgroundImage.src = 'images/txt4/gd-background.png';
+    playerImage.src = 'images/txt4/gd-cube.png';
 
-    const enemyImage = new Image();
-    enemyImage.src = 'images/txt1/txt1-enemy.png';
+    // Initialize player
+    let player = {
+        x: 50,
+        y: canvas.height - 100,
+        width: 50,
+        height: 50,
+        jumpPower: 20,
+        gravity: 1,
+        velocityY: 0,
+        isJumping: false,
+        jump() {
+            if (!this.isJumping) {
+                this.velocityY = -this.jumpPower;
+                this.isJumping = true;
+            }
+        },
+        update() {
+            this.velocityY += this.gravity;
+            this.y += this.velocityY;
 
-    function drawPlayer() {
-        ctx.drawImage(playerImage, playerX, playerY, playerWidth, playerHeight);
-    }
+            if (this.y > canvas.height - this.height) {
+                this.y = canvas.height - this.height;
+                this.velocityY = 0;
+                this.isJumping = false;
+            }
+        },
+        draw() {
+            ctx.drawImage(playerImage, this.x, this.y, this.width, this.height);
+        }
+    };
 
-    function drawBullet() {
-        ctx.fillStyle = 'white'; // Change bullet color to white
-        bullets.forEach(bullet => {
-            ctx.fillRect(bullet.x, bullet.y, bulletWidth, bulletHeight);
-        });
-    }
+    // Initialize spike
+    let spike = {
+        x: canvas.width,
+        y: canvas.height - 50, // Set the initial y-coordinate to canvas height minus spike height
+        width: 50,
+        height: 50,
+        speed: 5,
+        update() {
+            this.x -= this.speed;
 
-    function drawEnemy() {
-        ctx.drawImage(enemyImage, enemyX, enemyY, enemyWidth, enemyHeight);
-    }
+            if (this.x + this.width < 0) {
+                this.x = canvas.width;
+            }
+        },
+        draw() {
+            ctx.beginPath();
+            ctx.moveTo(this.x, this.y + this.height);
+            ctx.lineTo(this.x + this.width / 2, this.y);
+            ctx.lineTo(this.x + this.width, this.y + this.height);
+            ctx.fillStyle = 'black';
+            ctx.fill();
+        }
+    };
 
+    // Initialize score
+    let score = 0;
+
+    // Main game loop
     function gameLoop() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // Draw background image
+        ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
 
-        // Move player
-        if (keys['ArrowLeft'] && playerX > 0) {
-            playerX -= playerSpeed;
-        }
-        if (keys['ArrowRight'] && playerX < canvas.width - playerWidth) {
-            playerX += playerSpeed;
-        }
+        player.update();
+        player.draw();
 
-        // Move enemy
-        enemyY += enemySpeed;
-        if (enemyY > canvas.height) {
-            enemyX = Math.random() * (canvas.width - enemyWidth);
-            enemyY = 0;
-        }
+        spike.update();
+        spike.draw();
 
-        // Check collision with bullets
-        bullets.forEach((bullet, index) => {
-            bullet.y -= bulletSpeed;
-            if (bullet.y < 0) {
-                bullets.splice(index, 1);
-            }
-            if (bullet.x < enemyX + enemyWidth && bullet.x + bulletWidth > enemyX &&
-                bullet.y < enemyY + enemyHeight && bullet.y + bulletHeight > enemyY) {
-                enemyX = Math.random() * (canvas.width - enemyWidth);
-                enemyY = 0;
-                bullets.splice(index, 1);
-                score++; // Increase score when enemy is hit
-                document.getElementById('score').textContent = score; // Update score display
-            }
-        });
+        // Draw score
+        ctx.fillStyle = 'white';
+        ctx.font = '20px Arial';
+        ctx.fillText('Score: ' + score, 20, 40);
 
-        // Check collision with player
-        if (playerX < enemyX + enemyWidth && playerX + playerWidth > enemyX &&
-            playerY < enemyY + enemyHeight && playerY + playerHeight > enemyY) {
-            gameOver();
+        // Check if player successfully jumped over the spike
+        if (player.x > spike.x + spike.width && player.x < spike.x + spike.width + spike.speed) {
+            score++;
         }
 
-        drawPlayer();
-        drawBullet();
-        drawEnemy();
+        if (isColliding(player, spike)) {
+            alert("Game Over! Score: " + score);
+            document.location.reload();
+        }
 
         requestAnimationFrame(gameLoop);
     }
 
-    let keys = {};
-    window.addEventListener('keydown', e => {
-        keys[e.key] = true;
-        if (e.key === ' ') { // Spacebar
-            bullets.push({x: playerX + playerWidth / 2 - bulletWidth / 2, y: playerY});
-        }
-    });
-    window.addEventListener('keyup', e => {
-        keys[e.key] = false;
-    });
-
-    function gameOver() {
-        alert('Game Over! Your Score: ' + score);
-        window.location.reload();
+    // Collision detection function
+    function isColliding(rect1, rect2) {
+        return rect1.x < rect2.x + rect2.width &&
+               rect1.x + rect1.width > rect2.x &&
+               rect1.y < rect2.y + rect2.height &&
+               rect1.y + rect1.height > rect2.y;
     }
 
-    gameLoop();
+    // Event listener for jumping on click or tap
+    canvas.addEventListener('click', function() {
+        player.jump();
+    });
+
+    // Start the game loop when images are loaded
+    backgroundImage.onload = playerImage.onload = function() {
+        gameLoop();
+    };
+
+    // Resize canvas when window size changes
+    window.addEventListener('resize', function() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    });
 </script>
 </body>
 </html>
