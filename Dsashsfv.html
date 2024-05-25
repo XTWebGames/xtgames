@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shooter Game</title>
+<style>
+    body {
+        margin: 0;
+        overflow: hidden;
+        background-color: black; /* Set background color to black */
+    }
+    canvas {
+        display: block;
+        margin: 0 auto;
+    }
+</style>
+</head>
+<body>
+<audio id="backgroundMusic" loop autoplay>
+    <source src="music/txt4/background_song.mp3" type="audio/mpeg">
+    Your browser does not support the audio element.
+</audio>
+<canvas id="gameCanvas" width="800" height="600"></canvas>
+<p style="color:white;">Score: <span id="score">0</span></p> <!-- Score counter -->
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const playerWidth = 50;
+    const playerHeight = 50;
+    let playerX = canvas.width / 2 - playerWidth / 2;
+    const playerY = canvas.height - playerHeight - 10;
+    const playerSpeed = 5;
+
+    const bulletWidth = 5;
+    const bulletHeight = 10;
+    const bulletSpeed = 8;
+    let bullets = [];
+
+    const enemyWidth = 50;
+    const enemyHeight = 50;
+    let enemyX = Math.random() * (canvas.width - enemyWidth);
+    let enemyY = 0;
+    const enemySpeed = 3;
+
+    let score = 0; // Initialize score
+
+    // Load images
+    const playerImage = new Image();
+    playerImage.src = 'images/txt1/txt1-player.png';
+
+    const enemyImage = new Image();
+    enemyImage.src = 'images/txt1/txt1-enemy.png';
+
+    function drawPlayer() {
+        ctx.drawImage(playerImage, playerX, playerY, playerWidth, playerHeight);
+    }
+
+    function drawBullet() {
+        ctx.fillStyle = 'white'; // Change bullet color to white
+        bullets.forEach(bullet => {
+            ctx.fillRect(bullet.x, bullet.y, bulletWidth, bulletHeight);
+        });
+    }
+
+    function drawEnemy() {
+        ctx.drawImage(enemyImage, enemyX, enemyY, enemyWidth, enemyHeight);
+    }
+
+    function gameLoop() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Move player
+        if (keys['ArrowLeft'] && playerX > 0) {
+            playerX -= playerSpeed;
+        }
+        if (keys['ArrowRight'] && playerX < canvas.width - playerWidth) {
+            playerX += playerSpeed;
+        }
+
+        // Move enemy
+        enemyY += enemySpeed;
+        if (enemyY > canvas.height) {
+            enemyX = Math.random() * (canvas.width - enemyWidth);
+            enemyY = 0;
+        }
+
+        // Check collision with bullets
+        bullets.forEach((bullet, index) => {
+            bullet.y -= bulletSpeed;
+            if (bullet.y < 0) {
+                bullets.splice(index, 1);
+            }
+            if (bullet.x < enemyX + enemyWidth && bullet.x + bulletWidth > enemyX &&
+                bullet.y < enemyY + enemyHeight && bullet.y + bulletHeight > enemyY) {
+                enemyX = Math.random() * (canvas.width - enemyWidth);
+                enemyY = 0;
+                bullets.splice(index, 1);
+                score++; // Increase score when enemy is hit
+                document.getElementById('score').textContent = score; // Update score display
+            }
+        });
+
+        // Check collision with player
+        if (playerX < enemyX + enemyWidth && playerX + playerWidth > enemyX &&
+            playerY < enemyY + enemyHeight && playerY + playerHeight > enemyY) {
+            gameOver();
+        }
+
+        drawPlayer();
+        drawBullet();
+        drawEnemy();
+
+        requestAnimationFrame(gameLoop);
+    }
+
+    let keys = {};
+    window.addEventListener('keydown', e => {
+        keys[e.key] = true;
+        if (e.key === ' ') { // Spacebar
+            bullets.push({x: playerX + playerWidth / 2 - bulletWidth / 2, y: playerY});
+        }
+    });
+    window.addEventListener('keyup', e => {
+        keys[e.key] = false;
+    });
+
+    function gameOver() {
+        alert('Game Over! Your Score: ' + score);
+        window.location.reload();
+    }
+
+    gameLoop();
+</script>
+</body>
+</html>
