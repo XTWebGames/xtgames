@@ -9,7 +9,6 @@
         margin: 0;
         padding: 0;
         overflow: hidden;
-        background: linear-gradient(black, blue); /* Reversed gradient background */
     }
     canvas {
         display: block;
@@ -26,6 +25,12 @@
     // Set canvas dimensions to match window size
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
+
+    // Load images
+    const backgroundImage = new Image();
+    const playerImage = new Image();
+    backgroundImage.src = 'images/txt4/gd-background.png';
+    playerImage.src = 'images/txt4/gd-cube.png';
 
     // Initialize player
     let player = {
@@ -54,17 +59,7 @@
             }
         },
         draw() {
-            ctx.fillStyle = 'yellow'; // Set player body color to yellow
-            ctx.fillRect(this.x, this.y, this.width, this.height);
-            ctx.save(); // Save current transformation matrix
-            ctx.translate(this.x + this.width / 2, this.y + this.height / 2); // Translate to smile position
-            ctx.rotate(Math.PI / 2); // Rotate by 90 degrees (pi/2 radians)
-            ctx.fillStyle = 'blue'; // Set player smile color to blue
-            ctx.font = '30px Arial';
-            // Center the smile on the player
-            const smileWidth = ctx.measureText(':)').width;
-            ctx.fillText(':)', -smileWidth / 2, 0); // Draw rotated smiley face
-            ctx.restore(); // Restore saved transformation matrix
+            ctx.drawImage(playerImage, this.x, this.y, this.width, this.height);
         }
     };
 
@@ -97,7 +92,8 @@
 
     // Main game loop
     function gameLoop() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // Draw background image
+        ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
 
         player.update();
         player.draw();
@@ -136,8 +132,10 @@
         player.jump();
     });
 
-    // Start the game loop
-    gameLoop();
+    // Start the game loop when images are loaded
+    backgroundImage.onload = playerImage.onload = function() {
+        gameLoop();
+    };
 
     // Resize canvas when window size changes
     window.addEventListener('resize', function() {
