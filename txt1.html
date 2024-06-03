@@ -14,10 +14,23 @@
         display: block;
         margin: 0 auto;
     }
+    .fire-button {
+        position: absolute;
+        bottom: 20px;
+        left: 20px;
+        width: 50px;
+        height: 50px;
+        background-color: transparent;
+        border: none;
+        border-radius: 50%;
+        outline: none;
+        z-index: 1;
+    }
 </style>
 </head>
 <body>
 <canvas id="gameCanvas" width="800" height="600"></canvas>
+<button class="fire-button" id="fireButton"></button>
 <p style="color:white;">Score: <span id="score">0</span></p> <!-- Score counter -->
 <script>
     const canvas = document.getElementById('gameCanvas');
@@ -132,12 +145,39 @@
     let keys = {};
     window.addEventListener('keydown', e => {
         keys[e.key] = true;
-        if (e.key === ' ') { // Spacebar
-            bullets.push({x: playerX + playerWidth / 2 - bulletWidth / 2, y: playerY});
-        }
     });
     window.addEventListener('keyup', e => {
         keys[e.key] = false;
+    });
+
+    document.getElementById('fireButton').addEventListener('click', () => {
+        bullets.push({x: playerX + playerWidth / 2 - bulletWidth / 2, y: playerY});
+    });
+
+    let isDragging = false;
+    let dragStartX = 0;
+
+    canvas.addEventListener('touchstart', e => {
+        const touch = e.touches[0];
+        if (touch.clientX < canvas.width / 2) {
+            isDragging = true;
+            dragStartX = touch.clientX;
+        }
+    });
+
+    canvas.addEventListener('touchmove', e => {
+        if (isDragging) {
+            const touch = e.touches[0];
+            const deltaX = touch.clientX - dragStartX;
+            if (playerX + deltaX > 0 && playerX + deltaX < canvas.width - playerWidth) {
+                playerX += deltaX;
+            }
+            dragStartX = touch.clientX;
+        }
+    });
+
+    canvas.addEventListener('touchend', () => {
+        isDragging = false;
     });
 
     function gameOver() {
