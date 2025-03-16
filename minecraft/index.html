@@ -9,12 +9,19 @@
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
+            background-color: black; /* Set background to black */
+            color: white; /* Set text color to white */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            text-align: center;
         }
         #container {
             position: relative;
             width: 100%;
             height: 100vh;
-            background-color: #f0f0f0;
+            background-color: black; /* Keep container background black */
         }
         iframe {
             width: 100%;
@@ -35,10 +42,20 @@
         #fullscreen-btn:hover {
             background-color: #0056b3;
         }
+        h1 {
+            font-size: 48px; /* Large font size */
+            font-weight: bold;
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
     </style>
 </head>
 <body>
 
+    <h1>Minecraft - XT Games</h1> <!-- Large white text -->
+    
     <div id="container">
         <iframe src="https://doodleforce.github.io/xtgames/files/minecraft/" title="Minecraft Game"></iframe>
         <button id="fullscreen-btn" onclick="goFullscreen()">Go Fullscreen</button>
@@ -52,4 +69,3 @@
 
 </body>
 </html>
-
