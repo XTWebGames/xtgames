@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Minecraft - XT Web Games</title>
     <style>
+        * {
+            box-sizing: border-box;
+        }
         body {
             font-family: 'Arial', sans-serif;
             margin: 0;
@@ -12,6 +15,7 @@
             background-color: #f5f5f5;
             transition: all 0.3s ease;
             overflow-x: hidden;
+            touch-action: manipulation;
         }
 
         body.fullscreen {
@@ -58,8 +62,6 @@
             margin: 0;
             padding: 0;
             height: 100vh;
-            display: flex;
-            flex-direction: column;
         }
         
         .embed-container {
@@ -75,23 +77,13 @@
         
         body.fullscreen .embed-container {
             padding-bottom: 0;
-            height: 100vh;
+            height: calc(100vh - 60px); /* Account for button bar */
             width: 100vw;
             border-radius: 0;
             box-shadow: none;
             position: fixed;
             top: 0;
             left: 0;
-        }
-        
-        /* Force landscape orientation in fullscreen */
-        @media screen and (orientation:portrait) {
-            body.fullscreen .embed-container {
-                height: 100vw;
-                width: 100vh;
-                transform: rotate(90deg) translateY(-100vh);
-                transform-origin: top left;
-            }
         }
         
         .embed-container iframe {
@@ -113,11 +105,15 @@
         
         body.fullscreen .controls {
             position: fixed;
-            bottom: 20px;
+            bottom: 0;
             left: 0;
             right: 0;
-            margin-top: 0;
+            margin: 0;
+            padding: 10px;
+            background-color: rgba(0,0,0,0.7);
             z-index: 100;
+            display: flex;
+            justify-content: center;
         }
         
         .btn {
@@ -130,6 +126,7 @@
             cursor: pointer;
             transition: all 0.3s ease;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            flex-shrink: 0;
         }
         
         .btn:hover {
@@ -164,8 +161,25 @@
             padding: 20px;
         }
         
-        body.fullscreen.portrait .orientation-warning {
+        body.portrait .orientation-warning {
             display: flex;
+        }
+        
+        body.portrait .embed-container,
+        body.portrait .controls,
+        body.portrait .header {
+            display: none !important;
+        }
+        
+        /* Fullscreen disabled warning */
+        .fullscreen-disabled {
+            display: none;
+            background-color: #ffeb3b;
+            color: #000;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            text-align: center;
         }
     </style>
 </head>
@@ -184,98 +198,156 @@
                     allowfullscreen></iframe>
         </div>
         
-        <div class="controls">
+        <div class="controls" id="controls">
             <button class="btn" id="fullscreenBtn">Fullscreen</button>
             <button class="btn btn-secondary" id="actionBtn">Fullscreen not working? Try this.</button>
+        </div>
+        <div class="fullscreen-disabled" id="fullscreenDisabled">
+            Fullscreen mode is only available in landscape orientation
         </div>
     </div>
 
     <div class="orientation-warning" id="orientationWarning">
         <h2>Please rotate your device to landscape mode</h2>
-        <p>For the best gaming experience, please turn your device sideways.</p>
+        <p>This game requires landscape orientation to play.</p>
+        <p>All controls and content will appear when you rotate your device.</p>
     </div>
 
     <script>
-        // Fullscreen functionality
+        // DOM elements
         const fullscreenBtn = document.getElementById('fullscreenBtn');
         const embed = document.getElementById('embed');
         const body = document.body;
+        const controls = document.getElementById('controls');
         const orientationWarning = document.getElementById('orientationWarning');
+        const fullscreenDisabled = document.getElementById('fullscreenDisabled');
         
-        function toggleFullscreen() {
-            if (!document.fullscreenElement) {
-                // Enter fullscreen
-                body.classList.add('fullscreen');
-                checkOrientation();
-                
-                if (body.requestFullscreen) {
-                    body.requestFullscreen();
-                } else if (body.webkitRequestFullscreen) { /* Safari */
-                    body.webkitRequestFullscreen();
-                } else if (body.msRequestFullscreen) { /* IE11 */
-                    body.msRequestFullscreen();
-                }
-                
-                fullscreenBtn.textContent = 'Exit Fullscreen';
-            } else {
-                // Exit fullscreen
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                } else if (document.webkitExitFullscreen) { /* Safari */
-                    document.webkitExitFullscreen();
-                } else if (document.msExitFullscreen) { /* IE11 */
-                    document.msExitFullscreen();
-                }
+        // State variables
+        let isPortrait = window.innerHeight > window.innerWidth;
+        let isFullscreen = false;
+        
+        // Check orientation with debounce
+        function checkOrientation() {
+            const newIsPortrait = window.innerHeight > window.innerWidth;
+            if (newIsPortrait !== isPortrait) {
+                isPortrait = newIsPortrait;
+                updateOrientation();
             }
         }
         
-        function checkOrientation() {
-            if (window.innerHeight > window.innerWidth) {
+        // Update UI based on orientation
+        function updateOrientation() {
+            if (isPortrait) {
                 body.classList.add('portrait');
+                // Exit fullscreen if in portrait
+                if (isFullscreen) {
+                    exitFullscreen();
+                }
             } else {
                 body.classList.remove('portrait');
             }
         }
         
-        fullscreenBtn.addEventListener('click', toggleFullscreen);
+        // Fullscreen functions
+        function requestFullscreen() {
+            return new Promise((resolve, reject) => {
+                if (body.requestFullscreen) {
+                    body.requestFullscreen().then(resolve).catch(reject);
+                } else if (body.webkitRequestFullscreen) {
+                    body.webkitRequestFullscreen().then(resolve).catch(reject);
+                } else if (body.msRequestFullscreen) {
+                    body.msRequestFullscreen().then(resolve).catch(reject);
+                } else {
+                    reject(new Error('Fullscreen not supported'));
+                }
+            });
+        }
+        
+        function exitFullscreen() {
+            return new Promise((resolve, reject) => {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen().then(resolve).catch(reject);
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen().then(resolve).catch(reject);
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen().then(resolve).catch(reject);
+                } else {
+                    reject(new Error('Fullscreen not supported'));
+                }
+            });
+        }
+        
+        // Toggle fullscreen
+        async function toggleFullscreen() {
+            if (isPortrait) {
+                fullscreenDisabled.style.display = 'block';
+                setTimeout(() => {
+                    fullscreenDisabled.style.display = 'none';
+                }, 3000);
+                return;
+            }
+            
+            try {
+                if (!isFullscreen) {
+                    body.classList.add('fullscreen');
+                    await requestFullscreen();
+                    fullscreenBtn.textContent = 'Exit Fullscreen';
+                    isFullscreen = true;
+                } else {
+                    await exitFullscreen();
+                }
+            } catch (error) {
+                console.error('Fullscreen error:', error);
+            }
+        }
         
         // Handle fullscreen change events
+        function handleFullscreenChange() {
+            isFullscreen = !!(document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement);
+            
+            if (!isFullscreen) {
+                body.classList.remove('fullscreen');
+                fullscreenBtn.textContent = 'Fullscreen';
+            } else {
+                fullscreenBtn.textContent = 'Exit Fullscreen';
+            }
+        }
+        
+        // Event listeners
+        fullscreenBtn.addEventListener('click', toggleFullscreen);
+        
         document.addEventListener('fullscreenchange', handleFullscreenChange);
         document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
         document.addEventListener('msfullscreenchange', handleFullscreenChange);
         
-        function handleFullscreenChange() {
-            if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement) {
-                // Exited fullscreen
-                body.classList.remove('fullscreen');
-                body.classList.remove('portrait');
-                fullscreenBtn.textContent = 'Fullscreen';
-            } else {
-                checkOrientation();
-            }
-        }
-        
-        // Handle orientation changes
-        window.addEventListener('resize', function() {
-            if (document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
-                checkOrientation();
-            }
+        // Handle orientation changes with debounce
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(checkOrientation, 200);
         });
+        
+        window.addEventListener('orientationchange', checkOrientation);
         
         // Handle escape key press
         document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                if (document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
-                    toggleFullscreen();
-                }
+            if (e.key === 'Escape' && isFullscreen) {
+                toggleFullscreen();
             }
         });
         
-        // Action button functionality - opens a link
+        // Action button functionality
         const actionBtn = document.getElementById('actionBtn');
         actionBtn.addEventListener('click', () => {
             window.location.href = 'https://xtwebgames.github.io/files/minecraft';
         });
+        
+        // Initial check
+        checkOrientation();
+        updateOrientation();
+        
+        // Initialize fullscreen state
+        handleFullscreenChange();
     </script>
 </body>
 </html>
