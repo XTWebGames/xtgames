@@ -3,13 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Embed Page with Controls</title>
+    <title>Enhanced Embed Page</title>
     <style>
         body {
             font-family: 'Arial', sans-serif;
             margin: 0;
             padding: 0;
             background-color: #f5f5f5;
+            transition: all 0.3s ease;
+        }
+
+        body.fullscreen {
+            background-color: #000;
         }
         
         .header {
@@ -19,6 +24,12 @@
             padding: 15px;
             background-color: #1a73e8;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        
+        body.fullscreen .header {
+            opacity: 0;
+            pointer-events: none;
         }
         
         .logo-btn {
@@ -37,6 +48,14 @@
             max-width: 900px;
             margin: 30px auto;
             padding: 0 20px;
+            transition: all 0.3s ease;
+        }
+        
+        body.fullscreen .container {
+            max-width: 100%;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
         }
         
         .embed-container {
@@ -47,6 +66,14 @@
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
             background: #000;
+            transition: all 0.3s ease;
+        }
+        
+        body.fullscreen .embed-container {
+            padding-bottom: 0;
+            height: 100%;
+            border-radius: 0;
+            box-shadow: none;
         }
         
         .embed-container iframe {
@@ -63,6 +90,17 @@
             justify-content: center;
             gap: 15px;
             margin-top: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        body.fullscreen .controls {
+            position: fixed;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            margin-top: 0;
+            opacity: 0;
+            pointer-events: none;
         }
         
         .btn {
@@ -110,7 +148,7 @@
         
         <div class="controls">
             <button class="btn" id="fullscreenBtn">Fullscreen</button>
-            <button class="btn btn-secondary" id="actionBtn">Action Button</button>
+            <button class="btn btn-secondary" id="actionBtn">Visit Our Site</button>
         </div>
     </div>
 
@@ -118,22 +156,62 @@
         // Fullscreen functionality
         const fullscreenBtn = document.getElementById('fullscreenBtn');
         const embed = document.getElementById('embed');
+        const body = document.body;
         
-        fullscreenBtn.addEventListener('click', () => {
-            if (embed.requestFullscreen) {
-                embed.requestFullscreen();
-            } else if (embed.webkitRequestFullscreen) { /* Safari */
-                embed.webkitRequestFullscreen();
-            } else if (embed.msRequestFullscreen) { /* IE11 */
-                embed.msRequestFullscreen();
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                // Enter fullscreen
+                body.classList.add('fullscreen');
+                
+                if (body.requestFullscreen) {
+                    body.requestFullscreen();
+                } else if (body.webkitRequestFullscreen) { /* Safari */
+                    body.webkitRequestFullscreen();
+                } else if (body.msRequestFullscreen) { /* IE11 */
+                    body.msRequestFullscreen();
+                }
+                
+                fullscreenBtn.textContent = 'Exit Fullscreen';
+            } else {
+                // Exit fullscreen
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) { /* Safari */
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) { /* IE11 */
+                    document.msExitFullscreen();
+                }
+            }
+        }
+        
+        fullscreenBtn.addEventListener('click', toggleFullscreen);
+        
+        // Handle fullscreen change events
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+        document.addEventListener('msfullscreenchange', handleFullscreenChange);
+        
+        function handleFullscreenChange() {
+            if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement) {
+                // Exited fullscreen
+                body.classList.remove('fullscreen');
+                fullscreenBtn.textContent = 'Fullscreen';
+            }
+        }
+        
+        // Handle escape key press
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                if (document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
+                    toggleFullscreen();
+                }
             }
         });
         
-        // Action button functionality
+        // Action button functionality - opens a link
         const actionBtn = document.getElementById('actionBtn');
         actionBtn.addEventListener('click', () => {
-            alert('Button clicked!');
-            // Add your custom action here
+            window.location.href = 'https://example.com'; // Replace with your desired URL
         });
     </script>
 </body>
