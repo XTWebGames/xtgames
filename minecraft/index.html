@@ -11,10 +11,12 @@
             padding: 0;
             background-color: #f5f5f5;
             transition: all 0.3s ease;
+            overflow-x: hidden;
         }
 
         body.fullscreen {
             background-color: #000;
+            overflow: hidden;
         }
         
         .header {
@@ -56,6 +58,8 @@
             margin: 0;
             padding: 0;
             height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
         
         .embed-container {
@@ -71,9 +75,23 @@
         
         body.fullscreen .embed-container {
             padding-bottom: 0;
-            height: 100%;
+            height: 100vh;
+            width: 100vw;
             border-radius: 0;
             box-shadow: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+        }
+        
+        /* Force landscape orientation in fullscreen */
+        @media screen and (orientation:portrait) {
+            body.fullscreen .embed-container {
+                height: 100vw;
+                width: 100vh;
+                transform: rotate(90deg) translateY(-100vh);
+                transform-origin: top left;
+            }
         }
         
         .embed-container iframe {
@@ -99,8 +117,7 @@
             left: 0;
             right: 0;
             margin-top: 0;
-            opacity: 0;
-            pointer-events: none;
+            z-index: 100;
         }
         
         .btn {
@@ -128,6 +145,28 @@
         .btn-secondary:hover {
             background-color: #ddd;
         }
+        
+        /* Orientation warning */
+        .orientation-warning {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0,0,0,0.9);
+            color: white;
+            z-index: 1000;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        body.fullscreen.portrait .orientation-warning {
+            display: flex;
+        }
     </style>
 </head>
 <body>
@@ -139,7 +178,6 @@
     
     <div class="container">
         <div class="embed-container" id="embed">
-            <!-- Replace with your embed code -->
             <iframe src="https://xtwebgames.github.io/files/minecraft" 
                     frameborder="0" 
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
@@ -152,16 +190,23 @@
         </div>
     </div>
 
+    <div class="orientation-warning" id="orientationWarning">
+        <h2>Please rotate your device to landscape mode</h2>
+        <p>For the best gaming experience, please turn your device sideways.</p>
+    </div>
+
     <script>
         // Fullscreen functionality
         const fullscreenBtn = document.getElementById('fullscreenBtn');
         const embed = document.getElementById('embed');
         const body = document.body;
+        const orientationWarning = document.getElementById('orientationWarning');
         
         function toggleFullscreen() {
             if (!document.fullscreenElement) {
                 // Enter fullscreen
                 body.classList.add('fullscreen');
+                checkOrientation();
                 
                 if (body.requestFullscreen) {
                     body.requestFullscreen();
@@ -184,6 +229,14 @@
             }
         }
         
+        function checkOrientation() {
+            if (window.innerHeight > window.innerWidth) {
+                body.classList.add('portrait');
+            } else {
+                body.classList.remove('portrait');
+            }
+        }
+        
         fullscreenBtn.addEventListener('click', toggleFullscreen);
         
         // Handle fullscreen change events
@@ -195,9 +248,19 @@
             if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement) {
                 // Exited fullscreen
                 body.classList.remove('fullscreen');
+                body.classList.remove('portrait');
                 fullscreenBtn.textContent = 'Fullscreen';
+            } else {
+                checkOrientation();
             }
         }
+        
+        // Handle orientation changes
+        window.addEventListener('resize', function() {
+            if (document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
+                checkOrientation();
+            }
+        });
         
         // Handle escape key press
         document.addEventListener('keydown', function(e) {
@@ -211,7 +274,7 @@
         // Action button functionality - opens a link
         const actionBtn = document.getElementById('actionBtn');
         actionBtn.addEventListener('click', () => {
-            window.location.href = 'https://xtwebgames.github.io/files/minecraft'; // Replace with your desired URL
+            window.location.href = 'https://xtwebgames.github.io/files/minecraft';
         });
     </script>
 </body>
