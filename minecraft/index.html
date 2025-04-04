@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minecraft - XT Web Games</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            transition: all 0.3s ease;
+            overflow-x: hidden;
+            touch-action: manipulation;
+        }
+
+        body.fullscreen {
+            background-color: #000;
+            overflow: hidden;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background-color: #1a73e8;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        
+        body.fullscreen .header {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .logo-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 5px;
+        }
+        
+        .logo-btn img {
+            height: 40px;
+            width: auto;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 30px auto;
+            padding: 0 20px;
+            transition: all 0.3s ease;
+        }
+        
+        body.fullscreen .container {
+            max-width: 100%;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+        }
+        
+        .embed-container {
+            position: relative;
+            padding-bottom: 56.25%; /* 16:9 aspect ratio */
+            height: 0;
+            overflow: hidden;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            background: #000;
+            transition: all 0.3s ease;
+        }
+        
+        body.fullscreen .embed-container {
+            padding-bottom: 0;
+            height: 100vh;
+            width: 100vw;
+            border-radius: 0;
+            box-shadow: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+        }
+        
+        .embed-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        body.fullscreen .controls {
+            display: none;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 25px;
+            background-color: #1a73e8;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .btn:hover {
+            background-color: #0d5bba;
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background-color: #f1f1f1;
+            color: #333;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #ddd;
+        }
+        
+        /* Orientation warning */
+        .orientation-warning {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0,0,0,0.9);
+            color: white;
+            z-index: 1000;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        body.portrait .orientation-warning {
+            display: flex;
+        }
+        
+        body.portrait .embed-container,
+        body.portrait .controls,
+        body.portrait .header {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <button class="logo-btn" onclick="location.href='https://example.com'">
+            <img src="https://via.placeholder.com/150x40?text=LOGO" alt="Logo">
+        </button>
+    </header>
+    
+    <div class="container">
+        <div class="embed-container" id="embed">
+            <iframe src="https://xtwebgames.github.io/files/minecraft" 
+                    frameborder="0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                    allowfullscreen></iframe>
+        </div>
+        
+        <div class="controls" id="controls">
+            <button class="btn" id="fullscreenBtn">Fullscreen</button>
+            <button class="btn btn-secondary" id="altFullscreenBtn">Fullscreen not working? Try this.</button>
+        </div>
+    </div>
+
+    <div class="orientation-warning" id="orientationWarning">
+        <h2>Please rotate your device to landscape mode</h2>
+        <p>This game requires landscape orientation to play.</p>
+    </div>
+
+    <script>
+        // DOM elements
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
+        const altFullscreenBtn = document.getElementById('altFullscreenBtn');
+        const body = document.body;
+        
+        // State variables
+        let isPortrait = window.innerHeight > window.innerWidth;
+        
+        // Check orientation
+        function checkOrientation() {
+            const newIsPortrait = window.innerHeight > window.innerWidth;
+            if (newIsPortrait !== isPortrait) {
+                isPortrait = newIsPortrait;
+                updateOrientation();
+            }
+        }
+        
+        // Update UI based on orientation
+        function updateOrientation() {
+            if (isPortrait) {
+                body.classList.add('portrait');
+                // Exit fullscreen if in portrait
+                if (document.fullscreenElement) {
+                    exitFullscreen();
+                }
+            } else {
+                body.classList.remove('portrait');
+            }
+        }
+        
+        // Fullscreen functions
+        function requestFullscreen() {
+            if (body.requestFullscreen) {
+                return body.requestFullscreen();
+            } else if (body.webkitRequestFullscreen) {
+                return body.webkitRequestFullscreen();
+            } else if (body.msRequestFullscreen) {
+                return body.msRequestFullscreen();
+            }
+            return Promise.reject(new Error('Fullscreen not supported'));
+        }
+        
+        function exitFullscreen() {
+            if (document.exitFullscreen) {
+                return document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) {
+                return document.webkitExitFullscreen();
+            } else if (document.msExitFullscreen) {
+                return document.msExitFullscreen();
+            }
+            return Promise.reject(new Error('Fullscreen not supported'));
+        }
+        
+        // Toggle fullscreen
+        async function toggleFullscreen() {
+            try {
+                if (!document.fullscreenElement) {
+                    body.classList.add('fullscreen');
+                    await requestFullscreen();
+                } else {
+                    await exitFullscreen();
+                }
+            } catch (error) {
+                console.error('Fullscreen error:', error);
+            }
+        }
+        
+        // Alternative fullscreen method
+        function openAltFullscreen() {
+            window.location.href = 'https://xtwebgames.github.io/files/minecraft';
+        }
+        
+        // Handle fullscreen change events
+        function handleFullscreenChange() {
+            if (!document.fullscreenElement) {
+                body.classList.remove('fullscreen');
+            }
+        }
+        
+        // Event listeners
+        fullscreenBtn.addEventListener('click', toggleFullscreen);
+        altFullscreenBtn.addEventListener('click', openAltFullscreen);
+        
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+        document.addEventListener('msfullscreenchange', handleFullscreenChange);
+        
+        // Handle orientation changes
+        window.addEventListener('resize', checkOrientation);
+        window.addEventListener('orientationchange', checkOrientation);
+        
+        // Initial check
+        checkOrientation();
+    </script>
+</body>
+</html>
