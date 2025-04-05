@@ -3,13 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Select Minecraft Version - XT Web Games</title>
+    <title>4 Buttons with Links</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        .button-container {
+            text-align: center;
+        }
+        button {
+            background-color: #000000;
+            color: white;
+            border: none;
+            padding: 15px 32px;
+            margin: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 25px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #000FFF;
+        }
+    </style>
 </head>
 <body>
-    <h1>Click a Button to Visit a Link</h1>
-    <button onclick="window.location.href='https://www.example1.com';">1.12</button>
-    <button onclick="window.location.href='https://www.example2.com';">1.8</button>
-    <button onclick="window.location.href='https://www.example3.com';">1.5</button>
-    <button onclick="window.location.href='indev';">Indev</button>
+    <div class="button-container">
+        <h1>Click a Button to Visit a Link</h1>
+        <button onclick="window.location.href='https://www.example1.com';">Button 1</button>
+        <button onclick="window.location.href='https://www.example2.com';">Button 2</button>
+        <button onclick="window.location.href='https://www.example3.com';">Button 3</button>
+        <button onclick="window.location.href='indev';">Indev</button>
+    </div>
 </body>
 </html>
